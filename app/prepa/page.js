@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase.js'
+import { getJoueurId } from '../auth.js'
 import { Line } from 'react-chartjs-2'
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend } from 'chart.js'
 
@@ -37,9 +38,7 @@ function ExoCell({ nom, image_url, video_url }) {
   return (
     <td style={{ padding: '12px', fontWeight: 600, color: '#111' }}>
       <div style={{ fontWeight: 700, marginBottom: 6 }}>{nom}</div>
-      {image_url && (
-        <img src={image_url} alt={nom} style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, display: 'block', marginBottom: 6 }}/>
-      )}
+      {image_url && <img src={image_url} alt={nom} style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, display: 'block', marginBottom: 6 }}/>}
       <VideoBtn url={video_url}/>
     </td>
   )
@@ -54,10 +53,11 @@ export default function Prepa() {
 
   useEffect(() => {
     async function fetchData() {
-      const { data: r } = await supabase.from('routine_avant_match').select('*').eq('joueur_id', 1).order('ordre')
-      const { data: p } = await supabase.from('pathologies').select('*').eq('joueur_id', 1)
-      const { data: t } = await supabase.from('testing').select('*').eq('joueur_id', 1).order('date')
-      const { data: s } = await supabase.from('seances').select('*').eq('joueur_id', 1).order('ordre')
+      const joueurId = getJoueurId() || 1
+      const { data: r } = await supabase.from('routine_avant_match').select('*').eq('joueur_id', joueurId).order('ordre')
+      const { data: p } = await supabase.from('pathologies').select('*').eq('joueur_id', joueurId)
+      const { data: t } = await supabase.from('testing').select('*').eq('joueur_id', joueurId).order('date')
+      const { data: s } = await supabase.from('seances').select('*').eq('joueur_id', joueurId).order('ordre')
       setRoutine(r || [])
       setPathologies(p || [])
       setTesting(t || [])
@@ -80,7 +80,6 @@ export default function Prepa() {
   return (
     <div style={{ maxWidth: 1000, margin: '0 auto', fontFamily: 'sans-serif' }}>
 
-      {/* ROUTINE AVANT MATCH */}
       <Section title="Routine avant-match">
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
           <thead>
@@ -105,15 +104,12 @@ export default function Prepa() {
         </table>
       </Section>
 
-      {/* PATHOLOGIES */}
       <Section title="Protocoles selon pathologies">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {pathologies.map((p, i) => (
             <div key={i} style={{ padding: 16, background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 10 }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
-                {p.image_url && (
-                  <img src={p.image_url} alt={p.nom} style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }}/>
-                )}
+                {p.image_url && <img src={p.image_url} alt={p.nom} style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }}/>}
                 <div style={{ flex: 1 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
                     <span style={{ fontSize: 13, fontWeight: 700, color: '#ea580c', textTransform: 'uppercase', letterSpacing: 0.8 }}>⚠ {p.nom}</span>
@@ -128,7 +124,6 @@ export default function Prepa() {
         </div>
       </Section>
 
-      {/* TESTING */}
       <Section title="Testing physique">
         <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 20 }}>Derniers résultats — {dernier.date}</p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 28 }}>
@@ -159,7 +154,6 @@ export default function Prepa() {
         )}
       </Section>
 
-      {/* SEANCES */}
       <Section title="Séances">
         <div style={{ display: 'flex', gap: 10, marginBottom: 24 }}>
           <button style={tabStyle('renfo')} onClick={() => setActiveSeance('renfo')}>Renforcement Full Body</button>

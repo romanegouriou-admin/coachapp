@@ -23,6 +23,15 @@ export default function Login() {
       return
     }
 
+    if (data.role === 'joueur') {
+      const { data: joueur } = await supabase
+        .from('joueuses')
+        .select('id')
+        .eq('utilisateur_id', data.id)
+        .single()
+      if (joueur) data.joueur_id = joueur.id
+    }
+
     localStorage.setItem('user', JSON.stringify(data))
 
     if (data.role === 'coach' || data.role === 'pp' || data.role === 'pm') {

@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase.js'
+import { getJoueurId } from '../auth.js'
 import { Line, Radar } from 'react-chartjs-2'
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, RadialLinearScale, Tooltip, Legend, Filler } from 'chart.js'
 
@@ -26,10 +27,11 @@ export default function Mental() {
 
   useEffect(() => {
     async function fetchData() {
-      const { data: o } = await supabase.from('objectifs_mentaux').select('*').eq('joueur_id', 1)
-      const { data: s } = await supabase.from('suivi_mental').select('*').eq('joueur_id', 1).order('date')
-      const { data: p } = await supabase.from('profil_mental').select('*').eq('joueur_id', 1).single()
-      const { data: r } = await supabase.from('radar_mental').select('*').eq('joueur_id', 1).single()
+      const joueurId = getJoueurId() || 1
+      const { data: o } = await supabase.from('objectifs_mentaux').select('*').eq('joueur_id', joueurId)
+      const { data: s } = await supabase.from('suivi_mental').select('*').eq('joueur_id', joueurId).order('date')
+      const { data: p } = await supabase.from('profil_mental').select('*').eq('joueur_id', joueurId).single()
+      const { data: r } = await supabase.from('radar_mental').select('*').eq('joueur_id', joueurId).single()
       setObjectifs(o || [])
       setSuivi(s || [])
       setProfil(p)
@@ -39,10 +41,11 @@ export default function Mental() {
   }, [])
 
   async function envoyerSemaine() {
+    const joueurId = getJoueurId() || 1
     const today = new Date().toISOString().split('T')[0]
-    await supabase.from('suivi_mental').insert([{ joueur_id: 1, date: today, ...semaine }])
+    await supabase.from('suivi_mental').insert([{ joueur_id: joueurId, date: today, ...semaine }])
     setEnvoye(true)
-    const { data: s } = await supabase.from('suivi_mental').select('*').eq('joueur_id', 1).order('date')
+    const { data: s } = await supabase.from('suivi_mental').select('*').eq('joueur_id', joueurId).order('date')
     setSuivi(s || [])
   }
 
@@ -51,7 +54,6 @@ export default function Mental() {
   return (
     <div style={{ maxWidth: 1000, margin: '0 auto', fontFamily: 'sans-serif' }}>
 
-      {/* SUIVI MENTAL HEBDO */}
       <Section title="Suivi mental hebdomadaire" subtitle="Comment tu te sens cette semaine ?">
         {!envoye ? (
           <div style={{ background: '#f9fafb', borderRadius: 10, padding: 20, border: '1px solid #e5e7eb', marginBottom: 24 }}>
@@ -113,7 +115,6 @@ export default function Mental() {
         )}
       </Section>
 
-      {/* OBJECTIFS MENTAUX */}
       <Section title="Objectifs mentaux de la saison" subtitle="Progression sur les axes de travail définis avec le coach">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           {objectifs.map((o, i) => (
@@ -123,16 +124,7 @@ export default function Mental() {
                 <span style={{ fontSize: 13, fontWeight: 700, color: '#2563eb' }}>{o.progression}%</span>
               </div>
               <div style={{ height: 32, background: '#f3f4f6', borderRadius: 6, overflow: 'hidden' }}>
-                <div style={{
-                  width: `${o.progression}%`,
-                  height: '100%',
-                  background: 'linear-gradient(90deg, #1d4ed8, #2563eb)',
-                  borderRadius: 6,
-                  transition: 'width 1s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  paddingLeft: 10
-                }}>
+                <div style={{ width: `${o.progression}%`, height: '100%', background: 'linear-gradient(90deg, #1d4ed8, #2563eb)', borderRadius: 6, transition: 'width 1s ease', display: 'flex', alignItems: 'center', paddingLeft: 10 }}>
                   <span style={{ fontSize: 11, fontWeight: 700, color: 'white' }}>{o.progression}%</span>
                 </div>
               </div>
@@ -141,7 +133,6 @@ export default function Mental() {
         </div>
       </Section>
 
-      {/* PROFIL MENTAL */}
       {profil && (
         <Section title="Profil mental" subtitle="Analyse de ta personnalité sportive">
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>

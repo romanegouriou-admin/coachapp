@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabase.js'
+import { getJoueurId } from '../auth.js'
 
 function Section({ title, subtitle, children }) {
   return (
@@ -24,11 +25,14 @@ export default function Communication() {
   const bottomRef = useRef(null)
 
   useEffect(() => {
-    fetchData()
+    const joueurId = getJoueurId() || 1
+    fetchData(joueurId)
     const channel = supabase
       .channel('messages')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, payload => {
-        setMessages(prev => [...prev, payload.new])
+        if (payload.new.joueur_id === joueurId) {
+          setMessages(prev => [...prev, payload.new])
+        }
       })
       .subscribe()
     return () => supabase.removeChannel(channel)
@@ -38,18 +42,19 @@ export default function Communication() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  async function fetchData() {
-    const { data: m } = await supabase.from('messages').select('*').eq('joueur_id', 1).order('created_at')
-    const { data: d } = await supabase.from('documents').select('*').eq('joueur_id', 1).order('created_at', { ascending: false })
+  async function fetchData(joueurId) {
+    const { data: m } = await supabase.from('messages').select('*').eq('joueur_id', joueurId).order('created_at')
+    const { data: d } = await supabase.from('documents').select('*').eq('joueur_id', joueurId).order('created_at', { ascending: false })
     setMessages(m || [])
     setDocs(d || [])
   }
 
   async function envoyerMessage() {
+    const joueurId = getJoueurId() || 1
     const val = input.trim()
     if (!val) return
     setInput('')
-    await supabase.from('messages').insert([{ joueur_id: 1, expediteur: 'joueur', contenu: val }])
+    await supabase.from('messages').insert([{ joueur_id: joueurId, expediteur: 'joueur', contenu: val }])
   }
 
   async function marquerLu(id) {

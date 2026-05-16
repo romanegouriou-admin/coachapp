@@ -3,6 +3,7 @@ import { Doughnut, Bar } from 'react-chartjs-2'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js'
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase.js'
+import { getUser, getJoueurId } from '../auth.js'
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement)
 
@@ -13,10 +14,11 @@ export default function Basket() {
   const [joueur, setJoueur] = useState(null)
   const [matchs, setMatchs] = useState([])
 
-  useEffect(() => {
+ useEffect(() => {
     async function fetchData() {
-      const { data: joueurs } = await supabase.from('joueuses').select('*').eq('id', 1).single()
-      const { data: matchsData } = await supabase.from('matchs').select('*').eq('joueur_id', 1).order('date', { ascending: false })
+      const joueurId = getJoueurId() || 1
+      const { data: joueurs } = await supabase.from('joueuses').select('*').eq('id', joueurId).single()
+      const { data: matchsData } = await supabase.from('matchs').select('*').eq('joueur_id', joueurId).order('date', { ascending: false })
       setJoueur(joueurs)
       setMatchs(matchsData || [])
     }
