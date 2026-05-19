@@ -14,7 +14,65 @@ function calcEVA(s) {
   const eva = pts - t2i_rates - t2e_rates - t3_rates - lf_rates + reb + (parseInt(s.assists) || 0) - (parseInt(s.balle_perdue) || 0) + (parseInt(s.interception) || 0) + (parseInt(s.contre) || 0)
   return { pts, eva }
 }
+function EquipeStats({ equipes, joueurs }) {
+  const [equipeId, setEquipeId] = useState('')
+  const [stats, setStats] = useState([])
 
+  async function chargerStats(id) {
+    setEquipeId(id)
+    const { data: je } = await supabase.from('joueur_equipe').select('joueur_id').eq('equipe_id', id)
+    const ids = (je || []).map(j => j.joueur_id)
+    const { data: matchs } = await supabase.from('matchs').select('*').in('joueur_id', ids)
+    const statsParJoueur = joueurs.filter(j => ids.includes(j.id)).map(j => {
+      const ms = (matchs || []).filter(m => m.joueur_id === j.id)
+      const moy = (key) => ms.length === 0 ? 0 : (ms.reduce((a, m) => a + (m[key] || 0), 0) / ms.length).toFixed(1)
+      return { ...j, matchs: ms.length, pts: moy('points'), reb: moy('rebonds'), pd: moy('passes'), eva: moy('evaluation'), bp: moy('balle_perdue'), int: moy('interception') }
+    }).sort((a, b) => b.eva - a.eva)
+    setStats(statsParJoueur)
+  }
+
+  const inputStyle = { background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 8, padding: '8px 12px', fontFamily: 'sans-serif', fontSize: 13, color: '#111', outline: 'none', width: '100%', boxSizing: 'border-box' }
+
+  return (
+    <div style={{ background: 'white', borderRadius: 12, padding: 24, border: '1px solid #e5e7eb' }}>
+      <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 20 }}>Stats équipe</h2>
+      <div style={{ maxWidth: 300, marginBottom: 24 }}>
+        <label style={{ fontSize: 12, fontWeight: 600, color: '#6b7280', display: 'block', marginBottom: 4 }}>Équipe</label>
+        <select style={inputStyle} value={equipeId} onChange={e => chargerStats(e.target.value)}>
+          <option value="">Choisir une équipe</option>
+          {equipes.map(eq => <option key={eq.id} value={eq.id}>{eq.nom}</option>)}
+        </select>
+      </div>
+
+      {stats.length > 0 && (
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+          <thead>
+            <tr style={{ borderBottom: '2px solid #e5e7eb', background: '#f9fafb' }}>
+              {['Rang', 'Joueuse', 'Matchs', 'PTS moy', 'REB moy', 'PD moy', 'BP moy', 'INT moy', 'ÉVA moy'].map(h => (
+                <th key={h} style={{ padding: '10px 12px', textAlign: h === 'Joueuse' ? 'left' : 'center', color: '#6b7280', fontWeight: 600, fontSize: 11, textTransform: 'uppercase' }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {stats.map((j, i) => (
+              <tr key={j.id} style={{ borderBottom: '1px solid #f3f4f6', background: i === 0 ? '#fffbeb' : 'white' }}>
+                <td style={{ padding: '12px', textAlign: 'center', fontWeight: 700, color: i === 0 ? '#ca8a04' : '#6b7280' }}>{i + 1}</td>
+                <td style={{ padding: '12px', fontWeight: 600 }}>{j.prenom} {j.nom}</td>
+                <td style={{ padding: '12px', textAlign: 'center' }}>{j.matchs}</td>
+                <td style={{ padding: '12px', textAlign: 'center', fontWeight: 700, color: '#2563eb' }}>{j.pts}</td>
+                <td style={{ padding: '12px', textAlign: 'center', fontWeight: 700 }}>{j.reb}</td>
+                <td style={{ padding: '12px', textAlign: 'center', fontWeight: 700 }}>{j.pd}</td>
+                <td style={{ padding: '12px', textAlign: 'center', color: '#dc2626', fontWeight: 700 }}>{j.bp}</td>
+                <td style={{ padding: '12px', textAlign: 'center', color: '#16a34a', fontWeight: 700 }}>{j.int}</td>
+                <td style={{ padding: '12px', textAlign: 'center', fontWeight: 800, fontSize: 16 }}>{j.eva}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  )
+}
 export default function Admin() {
   const [user, setUser] = useState(null)
   const [equipes, setEquipes] = useState([])
@@ -157,7 +215,10 @@ export default function Admin() {
         {(user.role === 'coach' || user.role === 'pp') && <button style={tabStyle('prepa')} onClick={() => setActiveSection('prepa')}>Prépa Physique</button>}
         {(user.role === 'coach' || user.role === 'pm') && <button style={tabStyle('mental')} onClick={() => setActiveSection('mental')}>Prépa Mentale</button>}
         {user.role === 'coach' && <button style={tabStyle('voir')} onClick={() => setActiveSection('voir')}>Voir une joueuse</button>}
-      </div>
+{user.role === 'coach' && <button style={tabStyle('equipe')} onClick={() => setActiveSection('equipe')}>Stats équipe</button>}
+      {activeSection === 'equipe' && (
+  <EquipeStats equipes={equipes} joueurs={joueurs} supabase={supabase}/>
+)}</div>
 
       {/* SECTION JOUEURS */}
       {activeSection === 'joueurs' && (
