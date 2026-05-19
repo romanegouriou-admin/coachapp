@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase.js'
 import { getJoueurId } from '../auth.js'
+import ProtectedPage from '../ProtectedPage.js'
 import { Line, Radar } from 'react-chartjs-2'
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, RadialLinearScale, Tooltip, Legend, Filler } from 'chart.js'
 
@@ -52,6 +53,7 @@ export default function Mental() {
   const sliderStyle = { width: '100%', accentColor: '#111' }
 
   return (
+    <ProtectedPage>
     <div style={{ maxWidth: 1000, margin: '0 auto', fontFamily: 'sans-serif' }}>
 
       <Section title="Suivi mental hebdomadaire" subtitle="Comment tu te sens cette semaine ?">
@@ -63,7 +65,7 @@ export default function Mental() {
                 { key: 'stress', label: 'Niveau de stress', low: 'Très stressé', high: 'Très calme' },
                 { key: 'motivation', label: 'Motivation', low: 'Aucune', high: 'Maximum' },
                 { key: 'confiance', label: 'Confiance en soi', low: 'Très faible', high: 'Très élevée' },
-                { key: 'energie', label: 'Énergie', low: 'Épuisé', high: 'Plein d\'énergie' },
+                { key: 'energie', label: 'Énergie', low: 'Épuisé', high: "Plein d'énergie" },
               ].map(({ key, label, low, high }) => (
                 <div key={key}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
@@ -189,5 +191,6 @@ export default function Mental() {
       )}
 
     </div>
+    </ProtectedPage>
   )
 }

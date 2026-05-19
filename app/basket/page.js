@@ -3,18 +3,21 @@ import { Doughnut, Bar } from 'react-chartjs-2'
 import { Chart as ChartJS, ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement } from 'chart.js'
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase.js'
-import { getUser, getJoueurId } from '../auth.js'
+import { getJoueurId } from '../auth.js'
+import { useRouter } from 'next/navigation'
+import ProtectedPage from '../ProtectedPage.js'
 
 ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarElement)
 
-const moy = (matchs, key) => matchs.length === 0 ? 0 : (matchs.reduce((a, m) => a + m[key], 0) / matchs.length).toFixed(1)
+const moy = (matchs, key) => matchs.length === 0 ? 0 : (matchs.reduce((a, m) => a + (m[key] || 0), 0) / matchs.length).toFixed(1)
 
 export default function Basket() {
   const [showMatchs, setShowMatchs] = useState(false)
   const [joueur, setJoueur] = useState(null)
   const [matchs, setMatchs] = useState([])
+  const router = useRouter()
 
- useEffect(() => {
+  useEffect(() => {
     async function fetchData() {
       const joueurId = getJoueurId() || 1
       const { data: joueurs } = await supabase.from('joueuses').select('*').eq('id', joueurId).single()
@@ -30,15 +33,14 @@ export default function Basket() {
   const dernier = matchs[0] || {}
 
   return (
+    <ProtectedPage>
     <div style={{ maxWidth: 900, margin: '0 auto', fontFamily: 'sans-serif' }}>
 
-      {/* ROLE */}
       <div style={{ background: 'white', borderRadius: 12, padding: '20px 24px', marginBottom: 24, border: '1px solid #e5e7eb' }}>
         <span style={{ fontSize: 13, color: '#6b7280', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1 }}>Ton rôle dans l'équipe</span>
         <p style={{ fontSize: 16, color: '#111', marginTop: 8, fontWeight: 500 }}>{joueur.role} — Tu es le chef d'orchestre de l'équipe.</p>
       </div>
 
-      {/* CAMEMBERTS */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
         <div style={{ background: 'white', borderRadius: 12, padding: 20, border: '1px solid #e5e7eb', textAlign: 'center' }}>
           <p style={{ fontSize: 13, color: '#6b7280', fontWeight: 600, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>Victoires / Défaites</p>
@@ -55,14 +57,13 @@ export default function Basket() {
           <div style={{ width: 160, margin: '0 auto' }}>
             <Doughnut data={{
               labels: ['Joués', 'Restants'],
-              datasets: [{ data: [matchs.length, 20 - matchs.length], backgroundColor: ['#2563eb', '#bfdbfe'], borderWidth: 0 }]
+              datasets: [{ data: [matchs.length, Math.max(0, 20 - matchs.length)], backgroundColor: ['#2563eb', '#bfdbfe'], borderWidth: 0 }]
             }} options={{ plugins: { legend: { position: 'bottom', labels: { font: { size: 12 } } } }, cutout: '70%' }} />
           </div>
           <p style={{ fontSize: 22, fontWeight: 700, marginTop: 12 }}>{matchs.length} <span style={{ color: '#6b7280', fontSize: 14, fontWeight: 400 }}>matchs sur 20</span></p>
         </div>
       </div>
 
-      {/* STATS INDIVIDUELLES */}
       <div style={{ background: 'white', borderRadius: 12, padding: 24, border: '1px solid #e5e7eb', marginBottom: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
           <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111' }}>Statistiques individuelles</h2>
@@ -140,7 +141,6 @@ export default function Basket() {
         )}
       </div>
 
-      {/* STATS EQUIPE */}
       <div style={{ background: 'white', borderRadius: 12, padding: 24, border: '1px solid #e5e7eb', marginBottom: 24 }}>
         <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111', marginBottom: 20 }}>Statistiques de l'équipe</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 24 }}>
@@ -167,12 +167,13 @@ export default function Basket() {
           ].map(({ label, rang, total }) => (
             <div key={label} style={{ background: '#f9fafb', borderRadius: 10, padding: '14px 16px', textAlign: 'center' }}>
               <p style={{ fontSize: 28, fontWeight: 700, color: '#111' }}>{rang}</p>
-              <p style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>{label} / {total} joueurs</p>
+              <p style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>{label} / {total} joueuses</p>
             </div>
           ))}
         </div>
       </div>
 
     </div>
+    </ProtectedPage>
   )
 }

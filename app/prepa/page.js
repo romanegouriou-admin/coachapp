@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../supabase.js'
 import { getJoueurId } from '../auth.js'
+import ProtectedPage from '../ProtectedPage.js'
 import { Line } from 'react-chartjs-2'
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend } from 'chart.js'
 
@@ -78,6 +79,7 @@ export default function Prepa() {
   })
 
   return (
+    <ProtectedPage>
     <div style={{ maxWidth: 1000, margin: '0 auto', fontFamily: 'sans-serif' }}>
 
       <Section title="Routine avant-match">
@@ -185,5 +187,6 @@ export default function Prepa() {
       </Section>
 
     </div>
+    </ProtectedPage>
   )
 }

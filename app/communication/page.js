@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../supabase.js'
 import { getJoueurId } from '../auth.js'
+import ProtectedPage from '../ProtectedPage.js'
 
 function Section({ title, subtitle, children }) {
   return (
@@ -13,10 +14,10 @@ function Section({ title, subtitle, children }) {
   )
 }
 
-const typeIcon = { questionnaire: '📋', video: '▶', document: '📄' }
-const typeLabel = { questionnaire: 'Questionnaire', video: 'Vidéo', document: 'Document' }
-const typeColor = { questionnaire: '#dbeafe', video: '#fef9c3', document: '#f0fdf4' }
-const typeText = { questionnaire: '#2563eb', video: '#ca8a04', document: '#16a34a' }
+const typeIcon = { questionnaire: '📋', video: '▶', document: '📄', photo: '🖼️' }
+const typeLabel = { questionnaire: 'Questionnaire', video: 'Vidéo', document: 'Document', photo: 'Photo' }
+const typeColor = { questionnaire: '#dbeafe', video: '#fef9c3', document: '#f0fdf4', photo: '#fdf4ff' }
+const typeText = { questionnaire: '#2563eb', video: '#ca8a04', document: '#16a34a', photo: '#7c3aed' }
 
 export default function Communication() {
   const [messages, setMessages] = useState([])
@@ -66,6 +67,7 @@ export default function Communication() {
   const lus = docs.filter(d => d.lu)
 
   return (
+    <ProtectedPage>
     <div style={{ maxWidth: 1000, margin: '0 auto', fontFamily: 'sans-serif' }}>
 
       <Section title="Messagerie" subtitle="Échange direct avec le coach">
@@ -128,13 +130,13 @@ export default function Communication() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
               {nonLus.map((d, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', background: '#fafafa', border: '2px solid #e5e7eb', borderRadius: 10 }}>
-                  <div style={{ width: 42, height: 42, background: typeColor[d.type], borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>
-                    {typeIcon[d.type]}
+                  <div style={{ width: 42, height: 42, background: typeColor[d.type] || '#f3f4f6', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>
+                    {typeIcon[d.type] || '📎'}
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
                       <span style={{ fontSize: 14, fontWeight: 700, color: '#111' }}>{d.titre}</span>
-                      <span style={{ background: typeColor[d.type], color: typeText[d.type], fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20 }}>{typeLabel[d.type]}</span>
+                      <span style={{ background: typeColor[d.type] || '#f3f4f6', color: typeText[d.type] || '#6b7280', fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20 }}>{typeLabel[d.type] || d.type}</span>
                     </div>
                     <p style={{ fontSize: 12, color: '#6b7280' }}>{d.description}</p>
                   </div>
@@ -155,7 +157,7 @@ export default function Communication() {
               {lus.map((d, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 16px', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 10, opacity: 0.7 }}>
                   <div style={{ width: 38, height: 38, background: '#f3f4f6', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
-                    {typeIcon[d.type]}
+                    {typeIcon[d.type] || '📎'}
                   </div>
                   <div style={{ flex: 1 }}>
                     <span style={{ fontSize: 13, fontWeight: 600, color: '#6b7280' }}>{d.titre}</span>
@@ -170,5 +172,6 @@ export default function Communication() {
       </Section>
 
     </div>
+    </ProtectedPage>
   )
 }
